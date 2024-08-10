@@ -1,0 +1,11 @@
+# Ignore the entire game directory
+/DarkestDungeon/
+
+# Ignore large files
+*.mp4
+*.wav
+*.psd
+
+# Ignore build artifacts
+*.log
+*.tmp
