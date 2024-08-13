@@ -2,18 +2,18 @@
     "effects": [
       {
         "name": "Accuracy (ACC)",
-        "minimum": -8,
-        "maximum": 10
+        "minimum": -15,
+        "maximum": 20
       },
       {
         "name": "Bleed Resist",
-        "minimum": -20,
+        "minimum": -25,
         "maximum": 40
       },
       {
         "name": "Bleed Skill Chance",
-        "minimum": -15,
-        "maximum": 20
+        "minimum": -25,
+        "maximum": 40
       },
       {
         "name": "Blight Resist",
@@ -23,22 +23,22 @@
       {
         "name": "Blight Skill Chance",
         "minimum": -15,
-        "maximum": 20
+        "maximum": 40
       },
       {
         "name": "Critical Hit (CRIT)",
         "minimum": -5,
-        "maximum": 14
+        "maximum": 12
       },
       {
         "name": "Damage (DMG)",
         "minimum": -15,
-        "maximum": 60
+        "maximum": 20
       },
       {
         "name": "Death Blow Resist",
         "minimum": -10,
-        "maximum": 12
+        "maximum": 15
       },
       {
         "name": "Debuff Resist",
@@ -48,11 +48,11 @@
       {
         "name": "Debuff Skill Chance",
         "minimum": -15,
-        "maximum": 30
+        "maximum": 40
       },
       {
         "name": "Dodge (DODGE)",
-        "minimum": -20,
+        "minimum": -10,
         "maximum": 15
       },
       {
@@ -62,8 +62,8 @@
       },
       {
         "name": "Healing Skills",
-        "minimum": 15,
-        "maximum": 50
+        "minimum": -50,
+        "maximum": 33
       },
       {
         "name": "Move Resist",
@@ -72,13 +72,13 @@
       },
       {
         "name": "Move Skill Chance",
-        "minimum": 20,
-        "maximum": 20
+        "minimum": -25,
+        "maximum": 50
       },
       {
         "name": "Max HP",
-        "minimum": -20,
-        "maximum": 20
+        "minimum": -25,
+        "maximum": 33
       },
       {
         "name": "Protection (PROT)",
@@ -88,12 +88,12 @@
       {
         "name": "Scouting Chance",
         "minimum": 10,
-        "maximum": 15
+        "maximum": 20
       },
       {
         "name": "Speed (SPD)",
-        "minimum": -3,
-        "maximum": 8
+        "minimum": -2,
+        "maximum": 4
       },
       {
         "name": "Stress",
@@ -103,27 +103,17 @@
       {
         "name": "Stun Resist",
         "minimum": -20,
-        "maximum": 20
+        "maximum": 40
       },
       {
         "name": "Stun Skill Chance",
-        "minimum": 10,
-        "maximum": 20
-      },
-      {
-        "name": "Torchlight-based Effects",
-        "minimum": -10,
-        "maximum": 15
+        "minimum": -25,
+        "maximum": 30
       },
       {
         "name": "Trap Disarm Chance",
         "minimum": 10,
-        "maximum": 10
-      },
-      {
-        "name": "Transformation Stress",
-        "minimum": -40,
-        "maximum": -40
+        "maximum": 30
       },
       {
         "name": "Virtue Chance",
