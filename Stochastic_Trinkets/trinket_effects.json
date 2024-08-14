@@ -96,7 +96,7 @@
         "maximum": 4
       },
       {
-        "name": "Stress",
+        "name": "Stress Resist",
         "minimum": -20,
         "maximum": 15
       },
