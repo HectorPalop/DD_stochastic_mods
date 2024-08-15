@@ -1,7 +1,7 @@
 {
     "effects": [
       {
-        "name": "Accuracy (ACC)",
+        "name": "Accuracy",
         "minimum": -15,
         "maximum": 20
       },
@@ -26,17 +26,17 @@
         "maximum": 40
       },
       {
-        "name": "Critical Hit (CRIT)",
+        "name": "Critical Hit",
         "minimum": -5,
         "maximum": 12
       },
       {
-        "name": "Damage (DMG)",
+        "name": "Damage",
         "minimum": -15,
         "maximum": 20
       },
       {
-        "name": "Death Blow Resist",
+        "name": "Death Blow",
         "minimum": -10,
         "maximum": 15
       },
@@ -51,7 +51,7 @@
         "maximum": 40
       },
       {
-        "name": "Dodge (DODGE)",
+        "name": "Dodge",
         "minimum": -10,
         "maximum": 15
       },
@@ -81,7 +81,7 @@
         "maximum": 33
       },
       {
-        "name": "Protection (PROT)",
+        "name": "Protection",
         "minimum": 5,
         "maximum": 25
       },
@@ -91,12 +91,12 @@
         "maximum": 20
       },
       {
-        "name": "Speed (SPD)",
+        "name": "Speed",
         "minimum": -2,
         "maximum": 4
       },
       {
-        "name": "Stress Resist",
+        "name": "Stress",
         "minimum": -20,
         "maximum": 15
       },
