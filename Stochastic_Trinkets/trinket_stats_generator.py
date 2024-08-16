@@ -2,6 +2,7 @@ import json
 import os
 import ollama
 import ast
+import re
 
 def parse_effects(LLM_effects, vanilla_stats):
     try:
@@ -11,12 +12,10 @@ def parse_effects(LLM_effects, vanilla_stats):
             preparsed_effects = ast.literal_eval(LLM_effects)
             parsed_effects = f"[{', '.join(preparsed_effects)}]"
         except:
-            print('incorrect python format')
+            print('incorrect python format. Re-attempting...')
             return False
     if not all(effect[1:].strip() in vanilla_stats for effect in parsed_effects):
-        print('effect not recognized:')
-        for effect in parsed_effects:
-            print (effect[1:].strip())
+        print('some effect was not recognized. Re-attempting...')
         return False
     else:
         result_dict = {}
@@ -25,7 +24,6 @@ def parse_effects(LLM_effects, vanilla_stats):
             key = item[1:].strip()
             result_dict[key] = sign
         return result_dict
-
 
 def extract_names(json_file_path):
     json_file_path = os.path.join(script_dir, json_file_path)
@@ -39,7 +37,15 @@ def extract_names(json_file_path):
     
     return names
 
-def make_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
+def load_json_to_string(filename):
+    with open(filename, 'r') as file:
+        data = json.load(file)
+    json_string = json.dumps(data, separators=(',', ':'))
+    json_string = re.sub(r'([,:])(?![\d\s])', r'\1 ', json_string)
+    
+    return json_string
+
+def choose_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
     from_line = "FROM " + model
     parameter_line = "PARAMETER temperature " + temp
     system_line_header = (
@@ -51,7 +57,6 @@ def make_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
         "EACH STAT SHOULD BE ONE OF THE FOLLOWING LIST (WRITE THEM EXACTLY AS THEY APPEAR HERE):"
     )
     trinket_list_text = " ".join(stat_list)
-
     trinket_namer_modelfile = f'''
     {from_line}
     {parameter_line}
@@ -59,27 +64,64 @@ def make_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
     '''
     return trinket_namer_modelfile.strip()
 
+def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
+    from_line = "FROM " + model
+    parameter_line = "PARAMETER temperature " + temp
+    system_line_header = (
+        "SYSTEM "
+        "You are tasked with tuning the values of the effects from trinkets in the video game Darkest Dungeon. "
+        "The trinket you are currently analyzing is: " + trinket_name + ". "
+        "The user will give you a python dictionary. "
+        "The keys of the dictionnary are the names of the stats from the trinket. "
+        "The values of the dictionnary are + and - symbols, representing whether the stat should be positive or negative. "
+        "Your task is incorporating numerical values to these stats as values in the dictionnary. "
+        "The maximum and minimum magnitudes for each stat are given below in a json file. "
+        "EXAMPLE: "
+        "user: STATS: {'Bleed Resist': '-', 'Healing Received': '+', 'Stress': '-'} Please answer ONLY with the completed dictionary and NOTHING ELSE. "
+        "expected output: {'Bleed Resist': '-10', 'Healing Received': '+30', 'Stress': '-20'} "
+        "JSON FILE DETAILING THE MAXIMUM AND MINIMUM MAGNITUDES FOR EACH STAT: " + stat_list + ""
+    )    
+    trinket_tuner_modelfile = f'''
+    {from_line}
+    {parameter_line}
+    {system_line_header}
+    '''
+    return trinket_tuner_modelfile.strip()
+
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     json_file_path = os.path.join(script_dir, 'trinket_effects.json')
     vanilla_stats = extract_names(json_file_path)
-    print(f"vanilla_stats [{len(vanilla_stats)}] : {vanilla_stats}")
+    # print(f"vanilla_stats [{len(vanilla_stats)}] : {vanilla_stats}")
 
     trinket_name_placeholder = "Moonwhisper's Tear"
-    trinket_namer_modelfile = make_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name_placeholder)
+    trinket_namer_modelfile = choose_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name_placeholder)
     # print (trinket_namer_modelfile)
 
     ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
-    print('model loaded')
+    print('stat namer model loaded')
 
-    response = ollama.chat(model='trinket_namer', messages=[
+    stat_names = False
+    while stat_names == False:
+        response = ollama.chat(model='trinket_namer', messages=[
+        {
+            'role': 'user',
+            'content': 'Please suggest a list of trinket stats. Answer ONLY with a python list with these stats and NOTHING ELSE.',
+        },
+        ])
+        print('LLM answer:', response['message']['content'])
+        stat_names = parse_effects(response['message']['content'], vanilla_stats)
+    print('parsed stats:', stat_names)
+
+    trinket_bounds = load_json_to_string(json_file_path)
+    trinket_tuner_modelfile = tune_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=trinket_bounds, trinket_name=trinket_name_placeholder)
+    ollama.create(model='stat_tuner', modelfile=trinket_tuner_modelfile)
+    print('stat tuner model loaded')
+
+    response = ollama.chat(model='stat_tuner', messages=[
     {
         'role': 'user',
-        'content': 'Please suggest a list of trinket stats. Answer ONLY with a python list with these stats and NOTHING ELSE.',
+        'content': 'STATS: ' + str(stat_names) + ' Please answer ONLY with the completed dictionary and NOTHING ELSE.',
     },
     ])
-    print(response['message']['content'])
-    print(parse_effects(response['message']['content'], vanilla_stats))
-
-
-    
+    print('LLM answer:', response['message']['content'])
