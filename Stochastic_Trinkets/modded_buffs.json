@@ -1,0 +1,82 @@
+{
+   "buffs": [
+      {
+         "id": "TRINKET_Whispering_Ember_BUFF1",
+         "stat_type": "combat_stat_add",
+         "stat_sub_type": "attack_rating",
+         "amount": -5.0,
+         "remove_if_not_active": false,
+         "rule_type": "always",
+         "is_false_rule": false,
+         "rule_data": {
+            "float": 0,
+            "string": ""
+         }
+      },
+      {
+         "id": "TRINKET_Whispering_Ember_BUFF2",
+         "stat_type": "resistance",
+         "stat_sub_type": "bleed",
+         "amount": 0.2,
+         "remove_if_not_active": false,
+         "rule_type": "always",
+         "is_false_rule": false,
+         "rule_data": {
+            "float": 0,
+            "string": ""
+         }
+      },
+      {
+         "id": "TRINKET_Whispering_Ember_BUFF3",
+         "stat_type": "stress_dmg_received_percent",
+         "stat_sub_type": "",
+         "amount": -0.1,
+         "remove_if_not_active": false,
+         "rule_type": "always",
+         "is_false_rule": false,
+         "rule_data": {
+            "float": 0,
+            "string": ""
+         }
+      },
+      {
+         "id": "TRINKET_Starweave_Stud_BUFF1",
+         "stat_type": "combat_stat_add",
+         "stat_sub_type": "attack_rating",
+         "amount": -7.0,
+         "remove_if_not_active": false,
+         "rule_type": "always",
+         "is_false_rule": false,
+         "rule_data": {
+            "float": 0,
+            "string": ""
+         }
+      },
+      {
+         "id": "TRINKET_Starweave_Stud_BUFF2",
+         "stat_type": "resistance",
+         "stat_sub_type": "poison",
+         "amount": 0.18,
+         "remove_if_not_active": false,
+         "rule_type": "always",
+         "is_false_rule": false,
+         "rule_data": {
+            "float": 0,
+            "string": ""
+         }
+      },
+      {
+         "id": "TRINKET_Starweave_Stud_BUFF3",
+         "stat_type": "stress_dmg_received_percent",
+         "stat_sub_type": "",
+         "amount": -0.1,
+         "remove_if_not_active": false,
+         "rule_type": "always",
+         "is_false_rule": false,
+         "rule_data": {
+            "float": 0,
+            "string": ""
+         }
+      }
+   ]
+}
