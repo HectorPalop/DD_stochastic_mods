@@ -34,7 +34,6 @@ def extract_names(json_file_path):
         name = effect.get('name')
         if name:
             names.append(name)
-    
     return names
 
 def load_json_to_string(filename):
@@ -42,7 +41,6 @@ def load_json_to_string(filename):
         data = json.load(file)
     json_string = json.dumps(data, separators=(',', ':'))
     json_string = re.sub(r'([,:])(?![\d\s])', r'\1 ', json_string)
-    
     return json_string
 
 def choose_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
@@ -88,19 +86,11 @@ def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
     '''
     return trinket_tuner_modelfile.strip()
 
-if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_file_path = os.path.join(script_dir, 'trinket_effects.json')
+def generate_trinket_stats(json_file_path, trinket_name):
     vanilla_stats = extract_names(json_file_path)
-    # print(f"vanilla_stats [{len(vanilla_stats)}] : {vanilla_stats}")
-
-    trinket_name_placeholder = "Moonwhisper's Tear"
-    trinket_namer_modelfile = choose_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name_placeholder)
-    # print (trinket_namer_modelfile)
-
+    trinket_namer_modelfile = choose_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name)
     ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
     print('stat namer model loaded')
-
     stat_names = False
     while stat_names == False:
         response = ollama.chat(model='trinket_namer', messages=[
@@ -112,16 +102,30 @@ if __name__ == "__main__":
         print('LLM answer:', response['message']['content'])
         stat_names = parse_effects(response['message']['content'], vanilla_stats)
     print('parsed stats:', stat_names)
-
     trinket_bounds = load_json_to_string(json_file_path)
-    trinket_tuner_modelfile = tune_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=trinket_bounds, trinket_name=trinket_name_placeholder)
+    trinket_tuner_modelfile = tune_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=trinket_bounds, trinket_name=trinket_name)
     ollama.create(model='stat_tuner', modelfile=trinket_tuner_modelfile)
     print('stat tuner model loaded')
-
     response = ollama.chat(model='stat_tuner', messages=[
     {
         'role': 'user',
         'content': 'STATS: ' + str(stat_names) + ' Please answer ONLY with the completed dictionary and NOTHING ELSE.',
     },
     ])
-    print('LLM answer:', response['message']['content'])
+    return(response['message']['content'])
+
+if __name__ == "__main__":
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    json_file_path = os.path.join(script_dir, 'trinket_effects.json')
+
+    placeholder_trinket_name = "Moonwhisper's Tear"
+
+    gen_trinket_stats = generate_trinket_stats(json_file_path, placeholder_trinket_name)
+    print (gen_trinket_stats)
+
+    
+
+    
+
+    
+    

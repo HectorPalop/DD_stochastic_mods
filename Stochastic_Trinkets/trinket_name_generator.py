@@ -2,7 +2,6 @@ import json
 import os
 import ollama
 
-
 def get_unique_ids_from_file(json_file_path):
     with open(json_file_path, 'r') as file:
         data = json.load(file)
@@ -28,22 +27,24 @@ def make_trinket_name_system_prompt(model, temp, trinket_list):
     '''
     return trinket_namer_modelfile.strip()
 
-if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_file_path = os.path.join(script_dir, '..', 'DarkestDungeon', 'trinkets', 'base.entries.trinkets.json')
+def generate_name(json_file_path):
     unique_ids = get_unique_ids_from_file(json_file_path)
-    # print(f"unique_ids [{len(unique_ids)}] : {unique_ids}")
-
     trinket_namer_modelfile = make_trinket_name_system_prompt(model='llama3:8b', temp='0.9', trinket_list=unique_ids)
-    # print (trinket_namer_modelfile)
-
     ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
     print('model loaded')
-
     response = ollama.chat(model='trinket_namer', messages=[
     {
         'role': 'user',
         'content': 'Please suggest a unique trinket name. Answer only with ONE plausible name for the game file and NOTHING ELSE.',
     },
     ])
-    print(response['message']['content'])
+    return(response['message']['content'])
+
+if __name__ == "__main__":
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    json_file_path = os.path.join(script_dir, '..', 'DarkestDungeon', 'trinkets', 'base.entries.trinkets.json')
+    gen_trinket_name = generate_name(json_file_path)
+    print (gen_trinket_name)
+
+    
