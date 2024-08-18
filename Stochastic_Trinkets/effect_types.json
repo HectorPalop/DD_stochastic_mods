@@ -1,0 +1,147 @@
+{
+    "Accuracy": [
+    {
+      "stat_type": "combat_stat_add",
+      "stat_subtype": "attack_rating",
+      "magnitude_type": "additive"
+    }],
+    "Bleed Resist": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "bleed",
+      "magnitude_type": "percent"
+    }],
+    "Bleed Skill Chance": [
+    {
+      "stat_type": "bleed_chance",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Blight Resist": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "poison",
+      "magnitude_type": "percent"
+    }],
+    "Blight Skill Chance": [
+    {
+      "stat_type": "poison_chance",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Critical Hit": [
+    {
+      "stat_type": "combat_stat_add",
+      "stat_subtype": "crit_chance",
+      "magnitude_type": "percent"
+    }],
+    "Damage": [
+    {
+      "stat_type": "combat_stat_multiply",
+      "stat_subtype": "damage_low_and_high",
+      "magnitude_type": "percent"
+    }],
+    "Death Blow": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "death_blow",
+      "magnitude_type": "percent"
+    }],
+    "Debuff Resist": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "debuff",
+      "magnitude_type": "percent"
+    }],
+    "Debuff Skill Chance": [
+    {
+      "stat_type": "debuff_chance",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Dodge": [
+    {
+      "stat_type": "combat_stat_add",
+      "stat_subtype": "defense_rating",
+      "magnitude_type": "additive"
+    }],
+    "Healing Received": [
+    {
+      "stat_type": "hp_heal_received_percent",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Healing Skills": [
+    {
+      "stat_type": "hp_heal_percent",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Move Resist": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "move",
+      "magnitude_type": "percent"
+    }],
+    "Move Skill Chance": [
+    {
+      "stat_type": "move_chance",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Max HP": [
+    {
+      "stat_type": "combat_stat_multiply",
+      "stat_subtype": "max_hp",
+      "magnitude_type": "percent"
+    }],
+    "Protection": [
+    {
+      "stat_type": "combat_stat_add",
+      "stat_subtype": "protection_rating",
+      "magnitude_type": "percent"
+    }],
+    "Scouting Chance": [
+    {
+      "stat_type": "scouting_chance",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Speed": [
+    {
+      "stat_type": "combat_stat_add",
+      "stat_subtype": "speed_rating",
+      "magnitude_type": "additive"
+    }],
+    "Stress": [
+    {
+      "stat_type": "stress_dmg_received_percent",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Stun Resist": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "stun",
+      "magnitude_type": "percent"
+    }],
+    "Stun Skill Chance": [
+    {
+      "stat_type": "stun_chance",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+    }],
+    "Trap Disarm Chance": [
+    {
+      "stat_type": "resistance",
+      "stat_subtype": "trap",
+      "magnitude_type": "percent"
+    }],
+    "Virtue Chance": [
+    {
+      "stat_type": "resolve_check_percent",
+      "stat_subtype": "",
+      "magnitude_type": "percent"
+      }
+    ]
+  }
