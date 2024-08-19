@@ -1,0 +1,29 @@
+{
+   "entries": [
+      {
+         "id": "Whispering Oracle's Tear",
+         "buffs": [
+            "TRINKET_Whispering_Oracle's_Tear_BUFF1",
+            "TRINKET_Whispering_Oracle's_Tear_BUFF2"
+         ],
+         "hero_class_requirements": [],
+         "rarity": "uncommon",
+         "price": 10000,
+         "limit": 1,
+         "origin_dungeon": ""
+      },
+      {
+         "id": "Moonwhisper Pendant",
+         "buffs": [
+            "TRINKET_Moonwhisper_Pendant_BUFF1",
+            "TRINKET_Moonwhisper_Pendant_BUFF2",
+            "TRINKET_Moonwhisper_Pendant_BUFF3"
+         ],
+         "hero_class_requirements": [],
+         "rarity": "uncommon",
+         "price": 10000,
+         "limit": 1,
+         "origin_dungeon": ""
+      }
+   ]
+}

@@ -41,7 +41,7 @@ def generate_trinket_name(json_file_path):
     },
     ])
     gen_name = response['message']['content']
-    cleaned_gen_name = gen_name.replace("'", "").replace('"', "")
+    cleaned_gen_name = gen_name.replace('"', "")
     return cleaned_gen_name
 
 def parse_effects(LLM_effects, vanilla_stats):
@@ -160,18 +160,18 @@ def load_effect_types(json_data):
             effect_types = json.load(file)
     return effect_types
 
-def append_buffs_to_json(new_buffs, filename):
-    data = {"buffs": []}
+def append_entries_to_json(new_buffs, filename, type):
+    data = {type: []}
     if os.path.exists(filename) and os.path.getsize(filename) > 0:
         try:
             with open(filename, 'r') as file:
                 data = json.load(file)
         except json.JSONDecodeError:
             print(f"Error reading {filename}. File might be corrupted. Starting with empty buffs list.")
-    if "buffs" in data:
-        data["buffs"].extend(new_buffs)
+    if type in data:
+        data[type].extend(new_buffs)
     else:
-        data["buffs"] = new_buffs
+        data[type] = new_buffs
     with open(filename, 'w') as file:
         json.dump(data, file, indent=3)
 
@@ -183,7 +183,7 @@ def get_effect_entry(effect_types, effect_name, detail_key):
                 return effect_details[0][detail_key]
     return None
 
-def parse_gen_trinket(LLM_buffs_dict_string, LLM_trinket_name, effect_types_json_filepath, modded_json_filepath):
+def parse_gen_trinket_buffs(LLM_buffs_dict_string, LLM_trinket_name, effect_types_json_filepath, modded_json_filepath):
     effect_types = load_effect_types(effect_types_json_filepath)
     i=0
     buff_list=[]
@@ -214,7 +214,20 @@ def parse_gen_trinket(LLM_buffs_dict_string, LLM_trinket_name, effect_types_json
             buff2['id'] = "TRINKET_"+LLM_trinket_name.replace(" ", "_")+"_BUFF"+str(i)
             buff2['stat_sub_type'] = "damage_high"
             buff_list.append(buff2)
-    append_buffs_to_json(buff_list, modded_json_filepath)
+    append_entries_to_json(buff_list, modded_json_filepath, "buffs")
+    list_of_ids = [e["id"] for e in buff_list]
+    return list_of_ids
+
+def parse_gen_trinket_entry(trinket_name, trinket_buffs, modded_entries_filepath):
+    trinket_entry = {}
+    trinket_entry["id"] = trinket_name
+    trinket_entry["buffs"] = trinket_buffs
+    trinket_entry["hero_class_requirements"] = []
+    trinket_entry["rarity"] = "uncommon"
+    trinket_entry["price"] = 10000
+    trinket_entry["limit"] = 1
+    trinket_entry["origin_dungeon"] = ""
+    append_entries_to_json([trinket_entry], modded_entries_filepath, "entries")
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -230,5 +243,8 @@ if __name__ == "__main__":
     print ('trinket stats ->', gen_trinket_stats)
 
     effect_types_json_filename = os.path.join(script_dir, 'effect_types.json')
-    modded_json_filename = os.path.join(script_dir, 'modded_buffs.json')
-    parse_gen_trinket(gen_trinket_stats, gen_trinket_name, effect_types_json_filename, modded_json_filename)
+    modded_trinket_buffs_filename = os.path.join(script_dir, 'modded_buffs.json')
+    buff_names = parse_gen_trinket_buffs(gen_trinket_stats, gen_trinket_name, effect_types_json_filename, modded_trinket_buffs_filename)
+
+    modded_trinket_entries_filename = os.path.join(script_dir, 'modded_trinket_entries.json')
+    parse_gen_trinket_entry(gen_trinket_name, buff_names, modded_trinket_entries_filename)
