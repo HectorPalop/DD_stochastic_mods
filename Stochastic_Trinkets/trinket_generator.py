@@ -38,7 +38,7 @@ def generate_trinket_name(json_file_path):
     response = ollama.chat(model='trinket_namer', messages=[
     {
         'role': 'user',
-        'content': 'Please suggest a unique trinket name. Answer only with ONE plausible name for the game file and NOTHING ELSE.',
+        'content': 'Please suggest a unique trinket name. Avoid the word whisper. Answer only with ONE plausible name for the game file and NOTHING ELSE.',
     },
     ])
     gen_name = response['message']['content']
@@ -84,13 +84,14 @@ def load_json_to_string(filename):
     json_string = re.sub(r'([,:])(?![\d\s])', r'\1 ', json_string)
     return json_string
 
-def choose_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
+def choose_trinket_stats_system_prompt(model, temp, stat_list, trinket_name, trinket_rarity, trinket_class):
     from_line = "FROM " + model
     parameter_line = "PARAMETER temperature " + temp
     system_line_header = (
         "SYSTEM "
         "You are tasked with deciding the effects from trinkets in the video game Darkest Dungeon. "
         "You should choose stats that are representative of the trinket's title, which is: " + trinket_name + ". "
+        "The rarity of the trinket is " + trinket_rarity.replace('_', " ") + " and it is useable by " + trinket_class.replace('_', " ") + ". "
         "Choose a minimum of 1 and a maximum of 5 stats. Balance positive with negative effects."
         "Precede each stat with either a + or a - depending on whether the effect is positive or negative."
         "EACH STAT SHOULD BE ONE OF THE FOLLOWING LIST (WRITE THEM EXACTLY AS THEY APPEAR HERE):"
@@ -103,18 +104,21 @@ def choose_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
     '''
     return trinket_namer_modelfile.strip()
 
-def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
+def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name, trinket_rarity, trinket_class):
     from_line = "FROM " + model
     parameter_line = "PARAMETER temperature " + temp
     system_line_header = (
         "SYSTEM "
         "You are tasked with tuning the values of the effects from trinkets in the video game Darkest Dungeon. "
         "The trinket you are currently analyzing is: " + trinket_name + ". "
+        "The rarity of the trinket is " + trinket_rarity.replace('_', " ") + " and it is useable by " + trinket_class.replace('_', " ") + ". "
+        "More rare and class-specific trinkets have more potent effects (both positive and negative), whereas common trinkets are weaker. "
         "The user will give you a python dictionary. "
         "The keys of the dictionnary are the names of the stats from the trinket. "
         "The values of the dictionnary are + and - symbols, representing whether the stat should be positive or negative. "
         "Your task is incorporating numerical values to these stats as values in the dictionnary. "
-        "Choose concrete numerical values, not just ranges of values. "
+        "The names of the stats that you write should be the exactly the same as the ones provided by the user. "
+        "For each of those stats, choose concrete numerical values, not just ranges of values. "
         "The maximum and minimum magnitudes for each stat are given below in a json file. "
         "EXAMPLE: "
         "user: STATS: {'Bleed Resist': '-', 'Healing Received': '+', 'Stress': '-'} Please answer ONLY with the completed dictionary and NOTHING ELSE. "
@@ -128,9 +132,9 @@ def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
     '''
     return trinket_tuner_modelfile.strip()
 
-def generate_trinket_stats(json_file_path, trinket_name):
+def generate_trinket_stats(json_file_path, trinket_name, trinket_rarity, trinket_class):
     vanilla_stats = extract_names(json_file_path)
-    trinket_namer_modelfile = choose_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name)
+    trinket_namer_modelfile = choose_trinket_stats_system_prompt('llama3:8b', '0.7', vanilla_stats, trinket_name, trinket_rarity, trinket_class)
     ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
     print('stat namer model loaded')
     stat_names = False
@@ -145,7 +149,7 @@ def generate_trinket_stats(json_file_path, trinket_name):
         stat_names = parse_effects(response['message']['content'], vanilla_stats)
     print('parsed stats:', stat_names)
     trinket_bounds = load_json_to_string(json_file_path)
-    trinket_tuner_modelfile = tune_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=trinket_bounds, trinket_name=trinket_name)
+    trinket_tuner_modelfile = tune_trinket_stats_system_prompt('llama3:8b', '0.7', trinket_bounds, trinket_name, trinket_rarity, trinket_class)
     ollama.create(model='stat_tuner', modelfile=trinket_tuner_modelfile)
     print('stat tuner model loaded')
     response = ollama.chat(model='stat_tuner', messages=[
@@ -219,7 +223,10 @@ def parse_gen_trinket_buffs(LLM_buffs_dict_string, LLM_trinket_name, effect_type
     list_of_ids = [e["id"] for e in buff_list]
     return list_of_ids
 
-def parse_gen_trinket_entry(trinket_name, trinket_class, trinket_buffs, modded_entries_filepath):
+def parse_gen_trinket_entry(trinket_name, trinket_class, trinket_rarity, trinket_buffs, modded_entries_filepath, trinket_properties_filepath):
+    with open(trinket_properties_filepath, 'r') as file:
+        properties = json.load(file)
+    rarities_dict = properties["rarity"]
     trinket_entry = {}
     trinket_entry["id"] = trinket_name
     trinket_entry["buffs"] = trinket_buffs
@@ -227,8 +234,8 @@ def parse_gen_trinket_entry(trinket_name, trinket_class, trinket_buffs, modded_e
         trinket_entry["hero_class_requirements"] = []
     else:
         trinket_entry["hero_class_requirements"] = trinket_class
-    trinket_entry["rarity"] = "uncommon"
-    trinket_entry["price"] = 10000
+    trinket_entry["rarity"] = trinket_rarity
+    trinket_entry["price"] = rarities_dict[trinket_rarity]
     trinket_entry["limit"] = 1
     trinket_entry["origin_dungeon"] = ""
     append_entries_to_json([trinket_entry], modded_entries_filepath, "entries")
@@ -247,22 +254,60 @@ def make_trinket_class_system_prompt(model, temp, trinket_properties, trinket_na
     )
     trinket_list_text = " ".join(trinket_properties)
 
-    trinket_namer_modelfile = f'''
+    trinket_class_modelfile = f'''
     {from_line}
     {parameter_line}
     {system_line_header}{trinket_list_text}
     '''
-    return trinket_namer_modelfile.strip()
+    return trinket_class_modelfile.strip()
+
+def make_trinket_rarity_system_prompt(model, temp, trinket_rarities, trinket_name):
+    from_line = "FROM " + model
+    parameter_line = "PARAMETER temperature " + temp
+    system_line_header = (
+        "SYSTEM "
+        "You are tasked with deciding properties of gamefiles in the video game Darkest Dungeon. "
+        "More specifically, you will be deciding the rarity of a trinket in the game, called: " + trinket_name + ". "
+        "Choose a rarity that fits the name of the trinket. "
+        "Answer only with the rarity of the trinket and NOTHING ELSE. "
+        "Here is the list of all the possible rarities in the game: "
+    )
+    trinket_list_text = " ".join(trinket_rarities)
+
+    trinket_rarity_modelfile = f'''
+    {from_line}
+    {parameter_line}
+    {system_line_header}{trinket_list_text}
+    '''
+    return trinket_rarity_modelfile.strip()
+
+def generate_trinket_rarity(json_file_path, trinket_name):
+    with open(json_file_path, 'r') as file:
+        properties = json.load(file)
+    trinket_rarities = properties["rarity"].keys()
+    trinket_rarity_modelfile = make_trinket_rarity_system_prompt('llama3:8b', '0.9', trinket_rarities, trinket_name)
+    ollama.create(model='trinket_rarity_namer', modelfile=trinket_rarity_modelfile)
+    print('model loaded')
+    gen_name = False
+    while (gen_name not in trinket_rarities):
+        response = ollama.chat(model='trinket_rarity_namer', messages=[
+        {
+            'role': 'user',
+            'content': 'Please suggest the rarity category for the trinket. Answer only with a valid rarity and NOTHING ELSE.',
+        },
+        ])
+        gen_name = response['message']['content'].replace('"', "").lower()
+    return gen_name
 
 def generate_trinket_class(json_file_path, trinket_name):
     with open(json_file_path, 'r') as file:
         properties = json.load(file)
     hero_classes = properties["hero_class_requirements"]
     trinket_class_modelfile = make_trinket_class_system_prompt('llama3:8b', '0.9', hero_classes, trinket_name)
+    ollama.create(model='trinket_class_namer', modelfile=trinket_class_modelfile)
+    print('model loaded')
     gen_name = False
-    while (gen_name not in hero_classes) or (gen_name == 'every_class'):
-        ollama.create(model='trinket_class_namer', modelfile=trinket_class_modelfile)
-        print('model loaded')
+    while (gen_name not in hero_classes) or (gen_name == 'every_class'):  
         response = ollama.chat(model='trinket_class_namer', messages=[
         {
             'role': 'user',
@@ -285,8 +330,12 @@ if __name__ == "__main__":
 
     print ('trinket class ->', gen_trinket_class)
 
+    gen_trinket_rarity = generate_trinket_rarity(trinket_properties_filepath, gen_trinket_name)
+    
+    print ('trinket rarity ->', gen_trinket_rarity)
+
     trinket_effects_filepath = os.path.join(script_dir, 'trinket_effects.json')
-    gen_trinket_stats = generate_trinket_stats(trinket_effects_filepath, gen_trinket_name)
+    gen_trinket_stats = generate_trinket_stats(trinket_effects_filepath, gen_trinket_name, gen_trinket_rarity, gen_trinket_class)
 
     print ('trinket stats ->', gen_trinket_stats)
 
@@ -295,4 +344,4 @@ if __name__ == "__main__":
     buff_names = parse_gen_trinket_buffs(gen_trinket_stats, gen_trinket_name, effect_types_json_filename, modded_trinket_buffs_filename)
 
     modded_trinket_entries_filename = os.path.join(script_dir, 'modded_trinket_entries.json')
-    parse_gen_trinket_entry(gen_trinket_name, buff_names, modded_trinket_entries_filename)
+    parse_gen_trinket_entry(gen_trinket_name, gen_trinket_class, gen_trinket_rarity, buff_names, modded_trinket_entries_filename, trinket_properties_filepath)

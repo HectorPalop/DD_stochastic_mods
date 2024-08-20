@@ -1,0 +1,26 @@
+{
+    "rarity": {
+        "very_common" : 750,
+        "common" : 1125,
+        "uncommon" : 1500,
+        "rare" : 2250,
+        "very_rare" : 3750
+    },
+    "hero_class_requirements": [
+        "abomination",
+        "antiquarian",
+        "arbalest",
+        "bounty_hunter",
+        "crusader",
+        "grave_robber",
+        "hellion",
+        "highwayman",
+        "houndmaster",
+        "jester",
+        "leper",
+        "man_at_arms",
+        "occultist",
+        "plague_doctor",
+        "vestal"
+    ]
+}

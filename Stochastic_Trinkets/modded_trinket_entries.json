@@ -1,27 +1,79 @@
 {
    "entries": [
       {
-         "id": "Whispering Oracle's Tear",
+         "id": "Luminous Echoes",
          "buffs": [
-            "TRINKET_Whispering_Oracle's_Tear_BUFF1",
-            "TRINKET_Whispering_Oracle's_Tear_BUFF2"
+            "TRINKET_Luminous_Echoes_BUFF1",
+            "TRINKET_Luminous_Echoes_BUFF2",
+            "TRINKET_Luminous_Echoes_BUFF3",
+            "TRINKET_Luminous_Echoes_BUFF4"
          ],
-         "hero_class_requirements": [],
-         "rarity": "uncommon",
-         "price": 10000,
+         "hero_class_requirements": "occultist",
+         "rarity": "rare",
+         "price": 2250,
          "limit": 1,
          "origin_dungeon": ""
       },
       {
-         "id": "Moonwhisper Pendant",
+         "id": "Moonwhisper's Tear",
          "buffs": [
-            "TRINKET_Moonwhisper_Pendant_BUFF1",
-            "TRINKET_Moonwhisper_Pendant_BUFF2",
-            "TRINKET_Moonwhisper_Pendant_BUFF3"
+            "TRINKET_Moonwhisper's_Tear_BUFF1",
+            "TRINKET_Moonwhisper's_Tear_BUFF2"
          ],
-         "hero_class_requirements": [],
+         "hero_class_requirements": "occultist",
+         "rarity": "rare",
+         "price": 2250,
+         "limit": 1,
+         "origin_dungeon": ""
+      },
+      {
+         "id": "Mirthstone",
+         "buffs": [
+            "TRINKET_Mirthstone_BUFF1",
+            "TRINKET_Mirthstone_BUFF2",
+            "TRINKET_Mirthstone_BUFF3"
+         ],
+         "hero_class_requirements": "jester",
          "rarity": "uncommon",
-         "price": 10000,
+         "price": 1500,
+         "limit": 1,
+         "origin_dungeon": ""
+      },
+      {
+         "id": "Moonlit Oracle's Tear",
+         "buffs": [
+            "TRINKET_Moonlit_Oracle's_Tear_BUFF1",
+            "TRINKET_Moonlit_Oracle's_Tear_BUFF2"
+         ],
+         "hero_class_requirements": "occultist",
+         "rarity": "uncommon",
+         "price": 1500,
+         "limit": 1,
+         "origin_dungeon": ""
+      },
+      {
+         "id": "Glimmerstone",
+         "buffs": [
+            "TRINKET_Glimmerstone_BUFF1",
+            "TRINKET_Glimmerstone_BUFF2",
+            "TRINKET_Glimmerstone_BUFF3"
+         ],
+         "hero_class_requirements": "occultist",
+         "rarity": "rare",
+         "price": 2250,
+         "limit": 1,
+         "origin_dungeon": ""
+      },
+      {
+         "id": "Moonlit Token",
+         "buffs": [
+            "TRINKET_Moonlit_Token_BUFF1",
+            "TRINKET_Moonlit_Token_BUFF2",
+            "TRINKET_Moonlit_Token_BUFF3"
+         ],
+         "hero_class_requirements": "occultist",
+         "rarity": "uncommon",
+         "price": 1500,
          "limit": 1,
          "origin_dungeon": ""
       }
