@@ -18,6 +18,7 @@ def make_trinket_name_system_prompt(model, temp, trinket_list):
         "You are tasked with deciding names of gamefiles in the video game Darkest Dungeon. "
         "Answer only with ONE plausible name for the game file and NOTHING ELSE. "
         "Choose a name that is in line with the themes of the game (dark fantasy, lovecraftian). "
+        "Favor darker themes, and avoid the word 'whisper'. "
         "Choose a name that is different but in the same format as any in the following list:"
     )
     trinket_list_text = " ".join(trinket_list)
@@ -218,16 +219,58 @@ def parse_gen_trinket_buffs(LLM_buffs_dict_string, LLM_trinket_name, effect_type
     list_of_ids = [e["id"] for e in buff_list]
     return list_of_ids
 
-def parse_gen_trinket_entry(trinket_name, trinket_buffs, modded_entries_filepath):
+def parse_gen_trinket_entry(trinket_name, trinket_class, trinket_buffs, modded_entries_filepath):
     trinket_entry = {}
     trinket_entry["id"] = trinket_name
     trinket_entry["buffs"] = trinket_buffs
-    trinket_entry["hero_class_requirements"] = []
+    if trinket_class == 'every_class':
+        trinket_entry["hero_class_requirements"] = []
+    else:
+        trinket_entry["hero_class_requirements"] = trinket_class
     trinket_entry["rarity"] = "uncommon"
     trinket_entry["price"] = 10000
     trinket_entry["limit"] = 1
     trinket_entry["origin_dungeon"] = ""
     append_entries_to_json([trinket_entry], modded_entries_filepath, "entries")
+
+def make_trinket_class_system_prompt(model, temp, trinket_properties, trinket_name):
+    from_line = "FROM " + model
+    parameter_line = "PARAMETER temperature " + temp
+    system_line_header = (
+        "SYSTEM "
+        "You are tasked with deciding properties of gamefiles in the video game Darkest Dungeon. "
+        "More specifically, you will be deciding the hero class (if any) of a trinket in the game, called: " + trinket_name + ". "
+        "If this trinket is generic and fits all classes, please just answer the word: every_class. "
+        "On the contrary, if this name particularly suits one of the following hero classes, answer with the name of the hero class. "
+        "In any case, answer only with either every_class or a class name and NOTHING ELSE. "
+        "Here is the list of all the class names in the game: "
+    )
+    trinket_list_text = " ".join(trinket_properties)
+
+    trinket_namer_modelfile = f'''
+    {from_line}
+    {parameter_line}
+    {system_line_header}{trinket_list_text}
+    '''
+    return trinket_namer_modelfile.strip()
+
+def generate_trinket_class(json_file_path, trinket_name):
+    with open(json_file_path, 'r') as file:
+        properties = json.load(file)
+    hero_classes = properties["hero_class_requirements"]
+    trinket_class_modelfile = make_trinket_class_system_prompt('llama3:8b', '0.9', hero_classes, trinket_name)
+    gen_name = False
+    while (gen_name not in hero_classes) or (gen_name == 'every_class'):
+        ollama.create(model='trinket_class_namer', modelfile=trinket_class_modelfile)
+        print('model loaded')
+        response = ollama.chat(model='trinket_class_namer', messages=[
+        {
+            'role': 'user',
+            'content': 'Please suggest the hero class for the trinket. Answer only with either every_class or a class name and NOTHING ELSE.',
+        },
+        ])
+        gen_name = response['message']['content'].replace('"', "").lower()
+    return gen_name
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -236,6 +279,11 @@ if __name__ == "__main__":
     gen_trinket_name = generate_trinket_name(vanilla_trinkets_filepath)
 
     print ('trinket name ->', gen_trinket_name)
+
+    trinket_properties_filepath = os.path.join(script_dir, 'trinket_properties.json')
+    gen_trinket_class = generate_trinket_class(trinket_properties_filepath, gen_trinket_name)
+
+    print ('trinket class ->', gen_trinket_class)
 
     trinket_effects_filepath = os.path.join(script_dir, 'trinket_effects.json')
     gen_trinket_stats = generate_trinket_stats(trinket_effects_filepath, gen_trinket_name)
