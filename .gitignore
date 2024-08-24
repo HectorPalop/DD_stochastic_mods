@@ -1,6 +1,9 @@
 # Ignore the entire game directory
 /DarkestDungeon/
 
+# Ignore the Stable Diffusion checkpoint
+/Stochastic_Trinkets/fantassifiedIcons_fantassifiedIconsV20.safetensors
+
 # Ignore large files
 *.mp4
 *.wav
