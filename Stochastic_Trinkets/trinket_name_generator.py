@@ -29,7 +29,7 @@ def make_trinket_name_system_prompt(model, temp, trinket_list):
 
 def generate_name(json_file_path):
     unique_ids = get_unique_ids_from_file(json_file_path)
-    trinket_namer_modelfile = make_trinket_name_system_prompt(model='llama3:8b', temp='0.9', trinket_list=unique_ids)
+    trinket_namer_modelfile = make_trinket_name_system_prompt(model='llama3.1:8b', temp='0.9', trinket_list=unique_ids)
     ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
     print('model loaded')
     response = ollama.chat(model='trinket_namer', messages=[
