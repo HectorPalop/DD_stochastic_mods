@@ -5,9 +5,8 @@
 /Stochastic_Trinkets/fantassifiedIcons_fantassifiedIconsV20.safetensors
 
 # Ignore the generated content
-/Stochastic_Trinkets/modded_trinket_entries.json
-/Stochastic_Trinkets/modded_buffs.json
 /Stochastic_Trinkets/modded_trinket_images/
+/Stochastic_Trinkets/mod/
 
 # Ignore large files
 *.mp4
