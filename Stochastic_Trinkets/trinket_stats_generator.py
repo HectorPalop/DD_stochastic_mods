@@ -88,7 +88,7 @@ def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name):
 
 def generate_trinket_stats(json_file_path, trinket_name):
     vanilla_stats = extract_names(json_file_path)
-    trinket_namer_modelfile = choose_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name)
+    trinket_namer_modelfile = choose_trinket_stats_system_prompt(model='llama3.1:8b', temp='0.7', stat_list=vanilla_stats, trinket_name=trinket_name)
     ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
     print('stat namer model loaded')
     stat_names = False
@@ -103,7 +103,7 @@ def generate_trinket_stats(json_file_path, trinket_name):
         stat_names = parse_effects(response['message']['content'], vanilla_stats)
     print('parsed stats:', stat_names)
     trinket_bounds = load_json_to_string(json_file_path)
-    trinket_tuner_modelfile = tune_trinket_stats_system_prompt(model='llama3:8b', temp='0.7', stat_list=trinket_bounds, trinket_name=trinket_name)
+    trinket_tuner_modelfile = tune_trinket_stats_system_prompt(model='llama3.1:8b', temp='0.7', stat_list=trinket_bounds, trinket_name=trinket_name)
     ollama.create(model='stat_tuner', modelfile=trinket_tuner_modelfile)
     print('stat tuner model loaded')
     response = ollama.chat(model='stat_tuner', messages=[
