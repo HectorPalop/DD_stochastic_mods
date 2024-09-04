@@ -7,6 +7,8 @@ from diffusers import StableDiffusionPipeline, DDPMScheduler, EulerDiscreteSched
 from scipy.ndimage import gaussian_filter
 import numpy as np
 from PIL import Image
+import xml.etree.ElementTree as ET
+import xml.dom.minidom as minidom
 
 def get_unique_ids_from_file(json_file_path):
     with open(json_file_path, 'r') as file:
@@ -36,10 +38,10 @@ def make_trinket_name_system_prompt(model, temp, trinket_list):
 
 def generate_trinket_name(json_file_path):
     unique_ids = get_unique_ids_from_file(json_file_path)
-    trinket_namer_modelfile = make_trinket_name_system_prompt(model='llama3:8b', temp='0.9', trinket_list=unique_ids)
-    ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
-    print('model loaded')
-    response = ollama.chat(model='trinket_namer', messages=[
+    trinket_namer_modelfile = make_trinket_name_system_prompt(model='llama3.1:8b', temp='0.9', trinket_list=unique_ids)
+    ollama.create(model='DD_trinket_namer', modelfile=trinket_namer_modelfile)
+    print('DD_trinket_namer model loaded')
+    response = ollama.chat(model='DD_trinket_namer', keep_alive=0, messages=[
     {
         'role': 'user',
         'content': 'Please suggest a unique trinket name. Avoid the word whisper. Answer only with ONE plausible name for the game file and NOTHING ELSE.',
@@ -51,7 +53,8 @@ def generate_trinket_name(json_file_path):
 
 def parse_effects(LLM_effects, vanilla_stats):
     try:
-        parsed_effects = LLM_effects.strip('[]').split(', ')
+        preparsed_effects = LLM_effects.strip('[]').split(', ')
+        parsed_effects = [item.strip("'") for item in preparsed_effects]
     except:
         try:
             preparsed_effects = ast.literal_eval(LLM_effects)
@@ -59,8 +62,12 @@ def parse_effects(LLM_effects, vanilla_stats):
         except:
             print('incorrect python format. Re-attempting...')
             return False
+    print (parsed_effects)
     if not all(effect[1:].strip() in vanilla_stats for effect in parsed_effects):
         print('some effect was not recognized. Re-attempting...')
+        for effect in parsed_effects:
+            if effect[1:].strip() not in vanilla_stats:
+                print ("effect not in vanilla stats:", effect[1:].strip())
         return False
     else:
         result_dict = {}
@@ -138,12 +145,12 @@ def tune_trinket_stats_system_prompt(model, temp, stat_list, trinket_name, trink
 
 def generate_trinket_stats(json_file_path, trinket_name, trinket_rarity, trinket_class):
     vanilla_stats = extract_names(json_file_path)
-    trinket_namer_modelfile = choose_trinket_stats_system_prompt('llama3:8b', '0.7', vanilla_stats, trinket_name, trinket_rarity, trinket_class)
-    ollama.create(model='trinket_namer', modelfile=trinket_namer_modelfile)
-    print('stat namer model loaded')
+    trinket_namer_modelfile = choose_trinket_stats_system_prompt('llama3.1:8b', '0.7', vanilla_stats, trinket_name, trinket_rarity, trinket_class)
     stat_names = False
     while stat_names == False:
-        response = ollama.chat(model='trinket_namer', messages=[
+        ollama.create(model='DD_trinket_namer', modelfile=trinket_namer_modelfile)
+        print('DD_trinket_namer model loaded')
+        response = ollama.chat(model='DD_trinket_namer', keep_alive=0, messages=[
         {
             'role': 'user',
             'content': 'Please suggest a list of trinket stats. Answer ONLY with a python list with these stats and NOTHING ELSE.',
@@ -153,10 +160,10 @@ def generate_trinket_stats(json_file_path, trinket_name, trinket_rarity, trinket
         stat_names = parse_effects(response['message']['content'], vanilla_stats)
     print('parsed stats:', stat_names)
     trinket_bounds = load_json_to_string(json_file_path)
-    trinket_tuner_modelfile = tune_trinket_stats_system_prompt('llama3:8b', '0.7', trinket_bounds, trinket_name, trinket_rarity, trinket_class)
-    ollama.create(model='stat_tuner', modelfile=trinket_tuner_modelfile)
-    print('stat tuner model loaded')
-    response = ollama.chat(model='stat_tuner', messages=[
+    trinket_tuner_modelfile = tune_trinket_stats_system_prompt('llama3.1:8b', '0.7', trinket_bounds, trinket_name, trinket_rarity, trinket_class)
+    ollama.create(model='DD_trinket_stat_tuner', modelfile=trinket_tuner_modelfile)
+    print('DD_trinket_stat_tuner model loaded')
+    response = ollama.chat(model='DD_trinket_stat_tuner', keep_alive=0,  messages=[
     {
         'role': 'user',
         'content': 'STATS: ' + str(stat_names) + ' Please answer ONLY with the completed dictionary and NOTHING ELSE.',
@@ -220,7 +227,7 @@ def parse_gen_trinket_buffs(LLM_buffs_dict_string, LLM_trinket_name, effect_type
         if LLM_buff == 'Damage':
             buff2 = buff.copy()
             i+=1
-            buff2['id'] = "TRINKET_"+LLM_trinket_name.replace(" ", "_")+"_BUFF"+str(i)
+            buff2['id'] = "TRINKET_"+LLM_trinket_name.replace(" ", "_").replace("'", "").lower()+"_BUFF"+str(i)
             buff2['stat_sub_type'] = "damage_high"
             buff_list.append(buff2)
     append_entries_to_json(buff_list, modded_json_filepath, "buffs")
@@ -232,12 +239,12 @@ def parse_gen_trinket_entry(trinket_name, trinket_class, trinket_rarity, trinket
         properties = json.load(file)
     rarities_dict = properties["rarity"]
     trinket_entry = {}
-    trinket_entry["id"] = trinket_name
+    trinket_entry["id"] = trinket_name.replace(" ", "_").replace("'", "").lower()
     trinket_entry["buffs"] = trinket_buffs
     if trinket_class == 'every_class':
         trinket_entry["hero_class_requirements"] = []
     else:
-        trinket_entry["hero_class_requirements"] = trinket_class
+        trinket_entry["hero_class_requirements"] = [trinket_class]
     trinket_entry["rarity"] = trinket_rarity
     trinket_entry["price"] = rarities_dict[trinket_rarity]
     trinket_entry["limit"] = 1
@@ -289,12 +296,12 @@ def generate_trinket_rarity(json_file_path, trinket_name):
     with open(json_file_path, 'r') as file:
         properties = json.load(file)
     trinket_rarities = properties["rarity"].keys()
-    trinket_rarity_modelfile = make_trinket_rarity_system_prompt('llama3:8b', '0.9', trinket_rarities, trinket_name)
-    ollama.create(model='trinket_rarity_namer', modelfile=trinket_rarity_modelfile)
-    print('model loaded')
+    trinket_rarity_modelfile = make_trinket_rarity_system_prompt('llama3.1:8b', '0.9', trinket_rarities, trinket_name)
     gen_name = False
     while (gen_name not in trinket_rarities):
-        response = ollama.chat(model='trinket_rarity_namer', messages=[
+        ollama.create(model='DD_trinket_rarity_namer', modelfile=trinket_rarity_modelfile)
+        print('DD_trinket_rarity_namer model loaded')
+        response = ollama.chat(model='DD_trinket_rarity_namer', keep_alive=0, messages=[
         {
             'role': 'user',
             'content': 'Please suggest the rarity category for the trinket. Answer only with a valid rarity and NOTHING ELSE.',
@@ -307,20 +314,44 @@ def generate_trinket_class(json_file_path, trinket_name):
     with open(json_file_path, 'r') as file:
         properties = json.load(file)
     hero_classes = properties["hero_class_requirements"]
-    trinket_class_modelfile = make_trinket_class_system_prompt('llama3:8b', '0.9', hero_classes, trinket_name)
-    ollama.create(model='trinket_class_namer', modelfile=trinket_class_modelfile)
-    print('model loaded')
+    trinket_class_modelfile = make_trinket_class_system_prompt('llama3.1:8b', '0.9', hero_classes, trinket_name)
+    
     gen_name = False
     while (gen_name not in hero_classes) or (gen_name == 'every_class'):  
-        response = ollama.chat(model='trinket_class_namer', messages=[
+        ollama.create(model='DD_trinket_class_namer', modelfile=trinket_class_modelfile)
+        print('DD_trinket_class_namer model loaded')
+        response = ollama.chat(model='DD_trinket_class_namer', keep_alive=0, messages=[
         {
             'role': 'user',
             'content': 'Please suggest the hero class for the trinket. Answer only with either every_class or a class name and NOTHING ELSE.',
         },
         ])
         gen_name = response['message']['content'].replace('"', "").lower()
+        if (gen_name not in hero_classes) or (gen_name == 'every_class'):
+            print ('invalid class:', gen_name)
     return gen_name
 
+def generate_string_file(xml_file_path, new_entry_string, output_file_path):
+    tree = ET.parse(xml_file_path)
+    root = tree.getroot()
+    
+    for language in root.findall('language'):
+        # Create a new Element from the new_entry_string
+        new_entry = ET.fromstring(new_entry_string)
+        # Append the new entry to the existing language element
+        language.append(new_entry)
+    
+    # Use minidom for pretty printing
+    xml_str = ET.tostring(root, encoding='unicode')
+    reparsed = minidom.parseString(xml_str)
+    with open(output_file_path, 'w', encoding='utf-8') as f:
+        f.write(reparsed.toprettyxml(indent="  "))
+
+def generate_trinket_entry(trinket_name, xml_file_path, output_file_path):
+    trinket_id = trinket_name.replace(" ", "_").replace("'", "").lower()
+    entry_string = f'<entry id="str_inventory_title_trinket{trinket_id}"><![CDATA[{trinket_name}]]></entry>'
+    generate_string_file(xml_file_path, entry_string, output_file_path)
+        
 def remove_background(image, tolerance=30, blur_radius=5):
     if image.mode != 'RGBA':
         image = image.convert('RGBA')
@@ -336,37 +367,21 @@ def remove_background(image, tolerance=30, blur_radius=5):
     return result
 
 def resize_and_crop(image, target_width, target_height):
-    # Get the original dimensions
     original_width, original_height = image.size
-    
-    # Calculate the target aspect ratio
     target_aspect_ratio = target_width / target_height
-    
-    # Calculate the aspect ratio of the original image
     original_aspect_ratio = original_width / original_height
-    
-    # Determine new dimensions while maintaining aspect ratio
     if original_aspect_ratio > target_aspect_ratio:
-        # Image is wider than target aspect ratio
         new_height = target_height
         new_width = int(new_height * original_aspect_ratio)
     else:
-        # Image is taller than target aspect ratio
         new_width = target_width
         new_height = int(new_width / original_aspect_ratio)
-    
-    # Resize the image
     resized_image = image.resize((new_width, new_height), Image.LANCZOS)
-    
-    # Calculate the coordinates for cropping
     left = (new_width - target_width) // 2
     top = (new_height - target_height) // 2
     right = left + target_width
     bottom = top + target_height
-    
-    # Crop the image to the target dimensions
     cropped_image = resized_image.crop((left, top, right, bottom))
-    
     return cropped_image
 
 def generate_image(img_name, SD_modelpath, save_dir):
@@ -384,44 +399,56 @@ def generate_image(img_name, SD_modelpath, save_dir):
         guidance_scale=7.5,
     ).images[0]
     
-    # Convert to RGBA before background removal
     image_rgba = image.convert('RGBA')
     image_no_bg = remove_background(image_rgba)
 
     image_downsized = resize_and_crop(image_no_bg, 72, 144)
     
-    img_name = f"inv_trinket+{img_name.replace(' ', '_').lower()}.png"
+    sanitized_img_name = img_name.replace(" ", "_").replace("'", "").lower()
+    img_name = f"inv_trinket+{sanitized_img_name}.png"
     image_downsized.save(os.path.join(save_dir, img_name), format='PNG')
+
+def get_gpu_memory():
+    command = "nvidia-smi --query-gpu=memory.free --format=csv"
+    memory_free_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
+    memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+    return memory_free_values
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     vanilla_trinkets_filepath = os.path.join(script_dir, '..', 'DarkestDungeon', 'trinkets', 'base.entries.trinkets.json')
-    gen_trinket_name = generate_trinket_name(vanilla_trinkets_filepath)
-
-    print ('trinket name ->', gen_trinket_name)
+    vanilla_buffs_filepath = os.path.join(script_dir, '..', 'DarkestDungeon', 'shared', 'buffs', 'base.buffs.json')
+    vanilla_trinket_imgs_dir = os.path.join(script_dir, '..', 'DarkestDungeon', 'panels', 'icons_equip', 'trinket')
 
     trinket_properties_filepath = os.path.join(script_dir, 'trinket_properties.json')
-    gen_trinket_class = generate_trinket_class(trinket_properties_filepath, gen_trinket_name)
+    trinket_effects_filepath = os.path.join(script_dir, 'trinket_effects.json')
+    effect_types_json_filename = os.path.join(script_dir, 'effect_types.json')
+    workshop_xml_filename = os.path.join(script_dir, 'raw_strings_table.xml')
+    model_filename = os.path.join(script_dir, "fantassifiedIcons_fantassifiedIconsV20.safetensors")
 
+    modded_trinket_entries_filename = os.path.join(script_dir, 'mod', 'trinkets', 'base.entries.trinkets.json')
+    modded_trinket_buffs_filename = os.path.join(script_dir, 'mod', 'shared', 'buffs', 'base.buffs.json')
+    modded_img_dir = os.path.join(script_dir, 'mod', 'panels', 'icons_equip', 'trinket')
+    modded_stringtable_filename = os.path.join(script_dir, 'mod', 'localization', 'trinket_strings_table.xml')
+
+
+    gen_trinket_name = generate_trinket_name(vanilla_trinkets_filepath)
+    print ('trinket name ->', gen_trinket_name)
+
+    gen_trinket_class = generate_trinket_class(trinket_properties_filepath, gen_trinket_name)
     print ('trinket class ->', gen_trinket_class)
 
     gen_trinket_rarity = generate_trinket_rarity(trinket_properties_filepath, gen_trinket_name)
-    
     print ('trinket rarity ->', gen_trinket_rarity)
 
-    trinket_effects_filepath = os.path.join(script_dir, 'trinket_effects.json')
     gen_trinket_stats = generate_trinket_stats(trinket_effects_filepath, gen_trinket_name, gen_trinket_rarity, gen_trinket_class)
-
     print ('trinket stats ->', gen_trinket_stats)
 
-    effect_types_json_filename = os.path.join(script_dir, 'effect_types.json')
-    modded_trinket_buffs_filename = os.path.join(script_dir, 'modded_buffs.json')
+    generate_trinket_entry(gen_trinket_name, modded_stringtable_filename, modded_stringtable_filename)
+
     buff_names = parse_gen_trinket_buffs(gen_trinket_stats, gen_trinket_name, effect_types_json_filename, modded_trinket_buffs_filename)
 
-    modded_trinket_entries_filename = os.path.join(script_dir, 'modded_trinket_entries.json')
     parse_gen_trinket_entry(gen_trinket_name, gen_trinket_class, gen_trinket_rarity, buff_names, modded_trinket_entries_filename, trinket_properties_filepath)
 
-    model_filename = img_filename = os.path.join(script_dir, "fantassifiedIcons_fantassifiedIconsV20.safetensors")
-    img_dir = os.path.join(script_dir, "modded_trinket_images")
-    generate_image(gen_trinket_name, model_filename, img_dir)
+    generate_image(gen_trinket_name, model_filename, modded_img_dir)
