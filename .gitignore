@@ -9,7 +9,7 @@
 /Stochastic_Trinkets/mod/
 
 # Ignore the vanilla backup files
-/Stochastic_Trinkets/vanilla_backup/
+/vanilla_backup/
 
 # Ignore large files
 *.mp4
