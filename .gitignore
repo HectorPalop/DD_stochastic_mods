@@ -8,6 +8,9 @@
 /Stochastic_Trinkets/modded_trinket_images/
 /Stochastic_Trinkets/mod/
 
+# Ignore the vanilla backup files
+/Stochastic_Trinkets/vanilla_backup/
+
 # Ignore large files
 *.mp4
 *.wav
