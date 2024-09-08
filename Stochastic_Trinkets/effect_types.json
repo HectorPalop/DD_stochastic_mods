@@ -3,7 +3,7 @@
     {
       "stat_type": "combat_stat_add",
       "stat_subtype": "attack_rating",
-      "magnitude_type": "additive"
+      "magnitude_type": "percent"
     }],
     "Bleed Resist": [
     {
