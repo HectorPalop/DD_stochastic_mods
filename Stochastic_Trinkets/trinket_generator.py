@@ -331,27 +331,57 @@ def generate_trinket_class(json_file_path, trinket_name):
             print ('invalid class:', gen_name)
     return gen_name
 
-def generate_string_file(xml_file_path, new_entry_string, output_file_path):
-    tree = ET.parse(xml_file_path)
-    root = tree.getroot()
-    
+def generate_string_file(xml_file_path, trinket_id, trinket_name, output_file_path):
+    if not os.path.exists(output_file_path) or os.path.getsize(output_file_path) == 0:
+        # Create a new XML structure if the file doesn't exist or is empty
+        root = ET.Element("root")
+        languages = ["english", "french", "german", "spanish", "brazilian", "russian", 
+                     "polish", "czech", "italian", "schinese", "koreanb", "koreana", "japanese"]
+        for lang in languages:
+            ET.SubElement(root, "language", id=lang)
+    else:
+        try:
+            tree = ET.parse(output_file_path)
+            root = tree.getroot()
+        except ET.ParseError:
+            print(f"Error parsing {output_file_path}. Creating a new XML structure.")
+            root = ET.Element("root")
+            languages = ["english", "french", "german", "spanish", "brazilian", "russian", 
+                         "polish", "czech", "italian", "schinese", "koreanb", "koreana", "japanese"]
+            for lang in languages:
+                ET.SubElement(root, "language", id=lang)
+
+    # Create the new entry
+    new_entry = ET.Element("entry", id=f"str_inventory_title_trinket{trinket_id}")
+    new_entry.text = trinket_name
+
+    # Add the new entry to each language
     for language in root.findall('language'):
-        # Create a new Element from the new_entry_string
-        new_entry = ET.fromstring(new_entry_string)
-        # Append the new entry to the existing language element
         language.append(new_entry)
     
-    # Use minidom for pretty printing
+    # Use ElementTree for writing with correct XML declaration
     xml_str = ET.tostring(root, encoding='unicode')
     reparsed = minidom.parseString(xml_str)
+    pretty_xml = reparsed.toprettyxml(indent="  ")
+    
+    # Remove excessive newlines while preserving structure
+    pretty_xml = re.sub(r'>\n\s+([^<>\s])', r'>\1', pretty_xml)
+    pretty_xml = re.sub(r'\n\s*\n', '\n', pretty_xml)
+    
+    # Ensure UTF-8 encoding in the XML declaration
+    pretty_xml = pretty_xml.replace('<?xml version="1.0" ?>', '<?xml version="1.0" encoding="UTF-8"?>')
+    
+    # Wrap content of entry elements with CDATA
+    pretty_xml = re.sub(r'<entry([^>]*)>([^<]+)</entry>', r'<entry\1><![CDATA[\2]]></entry>', pretty_xml)
+    
+    # Write the cleaned-up XML
     with open(output_file_path, 'w', encoding='utf-8') as f:
-        f.write(reparsed.toprettyxml(indent="  "))
+        f.write(pretty_xml)
 
 def generate_trinket_entry(trinket_name, xml_file_path, output_file_path):
     trinket_id = trinket_name.replace(" ", "_").replace("'", "").lower()
-    entry_string = f'<entry id="str_inventory_title_trinket{trinket_id}"><![CDATA[{trinket_name}]]></entry>'
-    generate_string_file(xml_file_path, entry_string, output_file_path)
-        
+    generate_string_file(xml_file_path, trinket_id, trinket_name, output_file_path)
+
 def remove_background(image, tolerance=30, blur_radius=5):
     if image.mode != 'RGBA':
         image = image.convert('RGBA')
@@ -385,34 +415,34 @@ def resize_and_crop(image, target_width, target_height):
     return cropped_image
 
 def generate_image(img_name, SD_modelpath, save_dir):
-    pipe = StableDiffusionPipeline.from_single_file(SD_modelpath)
-    pipe.to("cuda")
-    prompt = f"{img_name}, 2D icon, Darkest Dungeon."
-    scheduler = EulerDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear")
-    
-    image = pipe(
-        prompt,
-        scheduler=scheduler,
-        num_inference_steps=30,
-        height=768,
-        width=512,
-        guidance_scale=7.5,
-    ).images[0]
-    
-    image_rgba = image.convert('RGBA')
-    image_no_bg = remove_background(image_rgba)
+    try:
+        pipe = StableDiffusionPipeline.from_single_file(SD_modelpath)
+        pipe.to("cuda")
+        prompt = f"{img_name}, 2D icon, Darkest Dungeon."
+        scheduler = EulerDiscreteScheduler(beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear")
+        
+        image = pipe(
+            prompt,
+            scheduler=scheduler,
+            num_inference_steps=30,
+            height=768,
+            width=512,
+            guidance_scale=7.5,
+            safety_checker=None
+        ).images[0]
+        
+        image_rgba = image.convert('RGBA')
+        image_no_bg = remove_background(image_rgba)
 
-    image_downsized = resize_and_crop(image_no_bg, 72, 144)
-    
-    sanitized_img_name = img_name.replace(" ", "_").replace("'", "").lower()
-    img_name = f"inv_trinket+{sanitized_img_name}.png"
-    image_downsized.save(os.path.join(save_dir, img_name), format='PNG')
-
-def get_gpu_memory():
-    command = "nvidia-smi --query-gpu=memory.free --format=csv"
-    memory_free_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
-    memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
-    return memory_free_values
+        image_downsized = resize_and_crop(image_no_bg, 72, 144)
+        
+        sanitized_img_name = img_name.replace(" ", "_").replace("'", "").lower()
+        img_name = f"inv_trinket+{sanitized_img_name}.png"
+        image_downsized.save(os.path.join(save_dir, img_name), format='PNG')
+    except OSError as e:
+        print(f"Error loading Stable Diffusion model: {e}")
+        print("Skipping image generation.")
+        return
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
