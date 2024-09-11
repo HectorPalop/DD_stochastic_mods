@@ -9,8 +9,8 @@ xcopy "vanilla_backup" "DarkestDungeon" /E /I /Y
 REM Change to the Stochastic_Trinkets directory
 cd Stochastic_Trinkets
 
-REM Erase contents of trinket_strings_table.xml
-echo.> "mod\localization\trinket_strings_table.xml"
+REM Erase contents of modded_trinkets.string_table.xml
+echo.> "mod\localization\modded_trinkets.string_table.xml"
 
 REM Erase contents of base.entries.trinkets.json
 echo.> "mod\trinkets\base.entries.trinkets.json"
