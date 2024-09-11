@@ -460,7 +460,7 @@ if __name__ == "__main__":
     modded_trinket_entries_filename = os.path.join(script_dir, 'mod', 'trinkets', 'base.entries.trinkets.json')
     modded_trinket_buffs_filename = os.path.join(script_dir, 'mod', 'shared', 'buffs', 'base.buffs.json')
     modded_img_dir = os.path.join(script_dir, 'mod', 'panels', 'icons_equip', 'trinket')
-    modded_stringtable_filename = os.path.join(script_dir, 'mod', 'localization', 'trinket_strings_table.xml')
+    modded_stringtable_filename = os.path.join(script_dir, 'mod', 'localization', 'modded_trinkets.string_table.xml')
 
 
     gen_trinket_name = generate_trinket_name(vanilla_trinkets_filepath)
@@ -475,7 +475,7 @@ if __name__ == "__main__":
     gen_trinket_stats = generate_trinket_stats(trinket_effects_filepath, gen_trinket_name, gen_trinket_rarity, gen_trinket_class)
     print ('trinket stats ->', gen_trinket_stats)
 
-    generate_trinket_entry(gen_trinket_name, modded_stringtable_filename, modded_stringtable_filename)
+    generate_trinket_entry(gen_trinket_name, workshop_xml_filename, modded_stringtable_filename)
 
     buff_names = parse_gen_trinket_buffs(gen_trinket_stats, gen_trinket_name, effect_types_json_filename, modded_trinket_buffs_filename)
 
