@@ -2,7 +2,7 @@
 /DarkestDungeon/
 
 # Ignore the Stable Diffusion checkpoint
-/Stochastic_Trinkets/fantassifiedIcons_fantassifiedIconsV20.safetensors
+/Stochastic_Trinkets/mod_resources/fantassifiedIcons_fantassifiedIconsV20.safetensors
 
 # Ignore the generated content
 /Stochastic_Trinkets/modded_trinket_images/
