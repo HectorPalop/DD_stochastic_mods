@@ -1,0 +1,40 @@
+{
+  "file_paths": {
+    "mod_resources": {
+      "vanilla_trinket_entries_json": "mod_resources/vanilla_trinket_entries.json",
+      "trinket_properties_json": "mod_resources/trinket_properties.json",
+      "trinket_effects_json": "mod_resources/trinket_effects.json",
+      "effect_types_json": "mod_resources/effect_types.json",
+      "workshop_xml": "mod_resources/raw_strings_table.xml",
+      "T2I_checkpoint": "mod_resources/fantassifiedIcons_fantassifiedIconsV20.safetensors"
+    },
+    "mod_output": {
+      "mod_output_trinket_entries": "mod/trinkets/base.entries.trinkets.json",
+      "mod_output_trinket_buffs": "mod/shared/buffs/base.buffs.json",
+      "mod_output_trinket_images": "mod/panels/icons_equip/trinket",
+      "mod_output_string_table": "mod/localization/modded_trinkets.string_table.xml"
+    }
+  },
+  "ollama_settings": {
+    "DD_trinket_namer": {
+      "model": "llama3.1:8b",
+      "temperature": "1.4"
+    },
+    "DD_trinket_class_namer": {
+      "model": "llama3.1:8b",
+      "temperature": "0.8"
+    },
+    "DD_trinket_rarity_namer": {
+      "model": "llama3.1:8b",
+      "temperature": "0.8"
+    },
+    "DD_trinket_stat_namer": {
+      "model": "llama3.1:8b",
+      "temperature": "1.2"
+    },
+    "DD_trinket_stat_tuner": {
+      "model": "llama3.1:8b",
+      "temperature": "0.8"
+    }
+  }
+}
