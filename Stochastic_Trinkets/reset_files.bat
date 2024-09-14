@@ -15,10 +15,13 @@ echo.> "mod\localization\modded_trinkets.string_table.xml"
 REM Erase contents of base.entries.trinkets.json
 echo.> "mod\trinkets\base.entries.trinkets.json"
 
+REM Delete modded.rarities.trinkets.json
+if exist "mod\trinkets\modded.rarities.trinkets.json" del "mod\trinkets\modded.rarities.trinkets.json"
+
 REM Copy contents of vanilla_all_buffs.json to base.buffs.json
 copy /Y "vanilla_all_buffs.json" "mod\shared\buffs\base.buffs.json"
 
 REM Delete all files in the icons_equip folder
 del /Q "mod\panels\icons_equip\trinket\*.*"
 
-echo Vanilla files have been restored, mod files have been prepared, and icons_equip folder has been cleared.
+echo Vanilla files have been restored, mod files have been prepared, modded rarities file has been deleted, and icons_equip folder has been cleared.

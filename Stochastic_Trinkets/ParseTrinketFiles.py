@@ -4,6 +4,7 @@ import ast
 import re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
+import shutil  # Add this import at the top of the file
 
 class ConfigManager:
     def __init__(self, config_path):
@@ -72,7 +73,20 @@ class TrinketProcessor:
 
     def _calculate_amount(self, LLM_buff, value):
         magnitude_type = self.effect_type_manager.get_effect_entry(LLM_buff, 'magnitude_type')
-        amount = float(value) / 100 if magnitude_type == "percent" else float(value)
+        
+        # Handle the case where value is '-'
+        if value == '-':
+            return 0  # or any other default value that makes sense for your use case
+        
+        # Remove any '+' or '-' signs from the value string
+        value = value.lstrip('+-')
+        
+        try:
+            amount = float(value) / 100 if magnitude_type == "percent" else float(value)
+        except ValueError:
+            print(f"Warning: Invalid value '{value}' for buff '{LLM_buff}'. Using 0 as default.")
+            return 0  # or any other default value that makes sense for your use case
+        
         return -amount if LLM_buff == 'Death Blow' else amount
 
     def _append_entries_to_json(self, new_entries, filename, type):
@@ -100,6 +114,25 @@ class TrinketProcessor:
             properties = json.load(file)
         
         rarities_dict = properties["rarity"]
+        
+        # Check if the rarity exists in vanilla rarities
+        try:
+            vanilla_rarities_path = self.config_manager.get_file_path('mod_resources', 'vanilla_rarities_trinkets_json')
+            with open(vanilla_rarities_path, 'r') as file:
+                vanilla_rarities = json.load(file)
+            
+            if not any(rarity['id'] == trinket_rarity for rarity in vanilla_rarities['rarities']):
+                self._add_new_rarity(trinket_rarity)
+                self._add_rarity_string(trinket_rarity)
+        except (KeyError, FileNotFoundError):
+            # If the vanilla rarities file is not specified or not found, always add the new rarity
+            self._add_new_rarity(trinket_rarity)
+            self._add_rarity_string(trinket_rarity)
+        
+        # Handle the "stochastic" rarity image
+        if trinket_rarity.lower() == "stochastic":
+            self._copy_stochastic_rarity_image()
+        
         trinket_entry = {
             "id": trinket_name.replace(" ", "_").replace("'", "").lower(),
             "buffs": trinket_buffs,
@@ -112,11 +145,48 @@ class TrinketProcessor:
         
         self._append_entries_to_json([trinket_entry], modded_entries_filepath, "entries")
 
+    def _add_new_rarity(self, rarity):
+        modded_rarities_path = self.config_manager.get_file_path('mod_output', 'mod_output_trinket_rarities')
+        rarity_id = rarity.replace(" ", "_").lower()
+        new_rarity = {
+            "id": rarity_id,
+            "award_category": "universal"
+        }
+        
+        if os.path.exists(modded_rarities_path) and os.path.getsize(modded_rarities_path) > 0:
+            with open(modded_rarities_path, 'r') as file:
+                modded_rarities = json.load(file)
+        else:
+            modded_rarities = {"rarities": []}
+        
+        if not any(r['id'] == rarity_id for r in modded_rarities['rarities']):
+            modded_rarities['rarities'].append(new_rarity)
+        
+        with open(modded_rarities_path, 'w') as file:
+            json.dump(modded_rarities, file, indent=3)
+
+    def _add_rarity_string(self, rarity):
+        string_file_manager = StringFileManager(self.config_manager)
+        rarity_id = rarity.replace(" ", "_").lower()
+        string_file_manager.generate_string_file(f"trinket_rarity_{rarity_id}", rarity, is_rarity=True)
+
+    def _copy_stochastic_rarity_image(self):
+        source_path = self.config_manager.get_file_path('mod_resources', 'iridescent_frame')
+        destination_folder = self.config_manager.get_file_path('mod_output', 'mod_output_trinket_images')
+        destination_path = os.path.join(destination_folder, "rarity_stochastic.png")
+
+        # Create the destination folder if it doesn't exist
+        os.makedirs(destination_folder, exist_ok=True)
+
+        # Copy the file
+        shutil.copy2(source_path, destination_path)
+        print(f"Copied stochastic rarity image to: {destination_path}")
+
 class StringFileManager:
     def __init__(self, config_manager):
         self.config_manager = config_manager
 
-    def generate_string_file(self, trinket_id, trinket_name):
+    def generate_string_file(self, entry_id, entry_text, is_rarity=False):
         output_file_path = self.config_manager.get_file_path('mod_output', 'mod_output_string_table')
         
         if not os.path.exists(output_file_path) or os.path.getsize(output_file_path) == 0:
@@ -124,8 +194,16 @@ class StringFileManager:
         else:
             root = self._parse_existing_xml(output_file_path)
 
-        new_entry = ET.Element("entry", id=f"str_inventory_title_trinket{trinket_id}")
-        new_entry.text = trinket_name
+        # Check if the entry already exists
+        existing_entry = root.find(f".//entry[@id='{entry_id}']")
+        if existing_entry is not None:
+            if not is_rarity:
+                # Update existing non-rarity entry
+                existing_entry.text = entry_text
+            return  # Don't add duplicate entries, especially for rarities
+
+        new_entry = ET.Element("entry", id=entry_id)
+        new_entry.text = entry_text
 
         for language in root.findall('language'):
             language.append(new_entry)
@@ -175,7 +253,7 @@ def main():
     gen_trinket_stats = "{'Virtue Chance': '+5', 'Debuff Resist': '+15'}"  
 
     trinket_id = gen_trinket_name.replace(" ", "_").replace("'", "").lower()
-    string_file_manager.generate_string_file(trinket_id, gen_trinket_name)
+    string_file_manager.generate_string_file(f"str_inventory_title_trinket{trinket_id}", gen_trinket_name)
 
     buff_names = trinket_processor.parse_gen_trinket_buffs(gen_trinket_stats, gen_trinket_name)
     trinket_processor.parse_gen_trinket_entry(gen_trinket_name, gen_trinket_class, gen_trinket_rarity, buff_names)

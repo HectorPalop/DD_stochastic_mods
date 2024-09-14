@@ -6,14 +6,20 @@
       "trinket_effects_json": "mod_resources/trinket_effects.json",
       "effect_types_json": "mod_resources/effect_types.json",
       "workshop_xml": "mod_resources/raw_strings_table.xml",
-      "T2I_checkpoint": "mod_resources/fantassifiedIcons_fantassifiedIconsV20.safetensors"
+      "T2I_checkpoint": "mod_resources/fantassifiedIcons_fantassifiedIconsV20.safetensors",
+      "vanilla_rarities_trinkets_json": "mod_resources/vanilla.rarities.trinkets.json",
+      "iridescent_frame": "mod_resources/iridescent_frame.png"
     },
     "mod_output": {
       "mod_output_trinket_entries": "mod/trinkets/base.entries.trinkets.json",
+      "mod_output_trinket_rarities": "mod/trinkets/modded.rarities.trinkets.json",
       "mod_output_trinket_buffs": "mod/shared/buffs/base.buffs.json",
       "mod_output_trinket_images": "mod/panels/icons_equip/trinket",
       "mod_output_string_table": "mod/localization/modded_trinkets.string_table.xml"
     }
+  },
+  "trinket_settings": {
+    "rarity": "Stochastic"
   },
   "ollama_settings": {
     "DD_trinket_namer": {

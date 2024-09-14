@@ -44,7 +44,7 @@ class TrinketGenerator:
         trinket_properties = self.trinket_factory.create_trinket()
         
         trinket_id = trinket_properties['name'].replace(" ", "_").replace("'", "").lower()
-        self.string_file_manager.generate_string_file(trinket_id, trinket_properties['name'])
+        self.string_file_manager.generate_string_file(f"str_inventory_title_trinket{trinket_id}", trinket_properties['name'])
 
         buff_names = self.trinket_processor.parse_gen_trinket_buffs(
             json.dumps(trinket_properties['stats']), 

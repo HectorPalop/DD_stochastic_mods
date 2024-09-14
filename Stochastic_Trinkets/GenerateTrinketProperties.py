@@ -372,6 +372,7 @@ class TrinketFactory:
         """
         self.data_loader = data_loader
         self.property_generator = property_generator
+        self.config = self.data_loader.config
 
     def create_trinket(self):
         """
@@ -389,7 +390,7 @@ class TrinketFactory:
         trinket_class = self.property_generator.generate_class(name)
         print('Trinket class ->', trinket_class)
 
-        rarity = self.property_generator.generate_rarity(name)
+        rarity = self.get_trinket_rarity(name)
         print('Trinket rarity ->', rarity)
 
         stats = self.property_generator.generate_stats(name, rarity, trinket_class)
@@ -401,6 +402,25 @@ class TrinketFactory:
             'rarity': rarity,
             'stats': stats
         }
+
+    def get_trinket_rarity(self, name):
+        """
+        Get the trinket rarity based on the configuration setting.
+
+        Args:
+            name (str): The name of the trinket.
+
+        Returns:
+            str: The rarity of the trinket.
+        """
+        rarity_setting = self.config['trinket_settings']['rarity']
+        if rarity_setting.lower() == 'stochastic':
+            return 'stochastic'
+        elif rarity_setting.lower() == 'generated':
+            return self.property_generator.generate_rarity(name)
+        else:
+            print(f"Unrecognized rarity setting: {rarity_setting}. Using 'Generated' as default.")
+            return self.property_generator.generate_rarity(name)
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
