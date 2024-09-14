@@ -4,6 +4,7 @@ from diffusers import StableDiffusionPipeline, EulerDiscreteScheduler
 from scipy.ndimage import gaussian_filter
 import numpy as np
 from PIL import Image
+import cv2
 
 class TrinketImageGenerator:
     """
@@ -107,9 +108,9 @@ class TrinketImageGenerator:
             raise
 
     @staticmethod
-    def _remove_background(image, tolerance=20, blur_radius=5):
+    def _remove_background(image, tolerance=15, blur_radius=3):
         """
-        Remove the background from an image.
+        Remove the background from an image with increased sensitivity.
 
         Args:
             image (PIL.Image): Input image with background.
@@ -128,9 +129,15 @@ class TrinketImageGenerator:
         mask = (mask - mask.min()) / (mask.max() - mask.min())
         data[:, :, 3] = (mask * 255).astype(np.uint8)
         
-        # Apply additional thresholding to remove residual background
-        alpha_threshold = 200  # Adjust this value to fine-tune background removal
+        # Apply more aggressive thresholding to remove residual background
+        alpha_threshold = 180  # Lowered from 200 to remove more background
         data[:, :, 3] = np.where(data[:, :, 3] > alpha_threshold, 255, 0)
+        
+        # Additional step to remove isolated pixels
+        kernel = np.ones((3, 3), np.uint8)
+        alpha_channel = data[:, :, 3]
+        alpha_channel = cv2.morphologyEx(alpha_channel, cv2.MORPH_OPEN, kernel, iterations=1)
+        data[:, :, 3] = alpha_channel
         
         return Image.fromarray(data, mode='RGBA')
 
