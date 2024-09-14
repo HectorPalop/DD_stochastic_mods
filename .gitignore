@@ -11,6 +11,10 @@
 # Ignore the vanilla backup files
 /vanilla_backup/
 
+# Ignore python cache files
+/Stochastic_Trinkets/__pycache__/
+
+
 # Ignore large files
 *.mp4
 *.wav
