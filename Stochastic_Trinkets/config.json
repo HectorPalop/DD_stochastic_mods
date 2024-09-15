@@ -15,11 +15,13 @@
       "mod_output_trinket_rarities": "mod/trinkets/modded.rarities.trinkets.json",
       "mod_output_trinket_buffs": "mod/shared/buffs/base.buffs.json",
       "mod_output_trinket_images": "mod/panels/icons_equip/trinket",
-      "mod_output_string_table": "mod/localization/modded_trinkets.string_table.xml"
+      "mod_output_string_table": "mod/localization/modded_trinkets.string_table.xml",
+      "mod_output_colors": "mod/colours/modded.colours.darkest"
     }
   },
   "trinket_settings": {
-    "rarity": "Stochastic"
+    "rarity": "Stochastic",
+    "color": "72 0 206 204"
   },
   "ollama_settings": {
     "DD_trinket_namer": {

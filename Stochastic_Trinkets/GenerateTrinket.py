@@ -1,5 +1,6 @@
 import os
 import json
+import argparse
 from GenerateTrinketProperties import TrinketDataLoader, AIModelManager, TrinketPropertyGenerator, TrinketFactory
 from ParseTrinketFiles import ConfigManager, EffectTypeManager, TrinketProcessor, StringFileManager
 from GenerateTrinketImage import TrinketImageGenerator
@@ -44,7 +45,7 @@ class TrinketGenerator:
         trinket_properties = self.trinket_factory.create_trinket()
         
         trinket_id = trinket_properties['name'].replace(" ", "_").replace("'", "").lower()
-        self.string_file_manager.generate_string_file(f"str_inventory_title_trinket{trinket_id}", trinket_properties['name'])
+        self.string_file_manager.generate_string_file(trinket_id, trinket_properties['name'])
 
         buff_names = self.trinket_processor.parse_gen_trinket_buffs(
             json.dumps(trinket_properties['stats']), 
@@ -66,16 +67,21 @@ def main():
     Main function to demonstrate trinket generation.
 
     This function sets up the TrinketGenerator with the config file
-    and generates a trinket, printing the result.
+    and generates the specified number of trinkets, printing the results.
     """
+    parser = argparse.ArgumentParser(description="Generate trinkets for Darkest Dungeon")
+    parser.add_argument("-n", "--num_trinkets", type=int, default=1, help="Number of trinkets to generate (default: 1)")
+    args = parser.parse_args()
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(script_dir, 'config.json')
     
     trinket_generator = TrinketGenerator(config_path)
-    generated_trinket = trinket_generator.generate_trinket()
     
-    print("Generated Trinket:")
-    print(json.dumps(generated_trinket, indent=2))
+    for i in range(args.num_trinkets):
+        generated_trinket = trinket_generator.generate_trinket()
+        print(f"\nGenerated Trinket {i+1}:")
+        print(json.dumps(generated_trinket, indent=2))
 
 if __name__ == "__main__":
     main()

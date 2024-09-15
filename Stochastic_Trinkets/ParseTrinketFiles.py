@@ -4,7 +4,7 @@ import ast
 import re
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
-import shutil  # Add this import at the top of the file
+import shutil
 
 class ConfigManager:
     def __init__(self, config_path):
@@ -165,10 +165,35 @@ class TrinketProcessor:
         with open(modded_rarities_path, 'w') as file:
             json.dump(modded_rarities, file, indent=3)
 
+        # Add the new rarity color
+        self._add_rarity_color(rarity_id)
+
+    def _add_rarity_color(self, rarity_id):
+        colors_file_path = self.config_manager.get_file_path('mod_output', 'mod_output_colors')
+        
+        # Read the color from config.json
+        color = self.config_manager.config['trinket_settings']['color']
+        
+        color_line = f'colour: .id "{rarity_id}"           .rgba {color}\n'
+
+        if not os.path.exists(colors_file_path):
+            # Create the file and add the color line
+            with open(colors_file_path, 'w') as file:
+                file.write(color_line)
+        else:
+            # Check if the color line already exists
+            with open(colors_file_path, 'r') as file:
+                content = file.read()
+            
+            if color_line not in content:
+                # Append the new color line
+                with open(colors_file_path, 'a') as file:
+                    file.write(color_line)
+
     def _add_rarity_string(self, rarity):
         string_file_manager = StringFileManager(self.config_manager)
         rarity_id = rarity.replace(" ", "_").lower()
-        string_file_manager.generate_string_file(f"trinket_rarity_{rarity_id}", rarity, is_rarity=True)
+        string_file_manager.generate_string_file(rarity_id, rarity.title(), is_rarity=True)
 
     def _copy_stochastic_rarity_image(self):
         source_path = self.config_manager.get_file_path('mod_resources', 'iridescent_frame')
@@ -194,21 +219,30 @@ class StringFileManager:
         else:
             root = self._parse_existing_xml(output_file_path)
 
-        # Check if the entry already exists
-        existing_entry = root.find(f".//entry[@id='{entry_id}']")
-        if existing_entry is not None:
-            if not is_rarity:
-                # Update existing non-rarity entry
-                existing_entry.text = entry_text
-            return  # Don't add duplicate entries, especially for rarities
-
-        new_entry = ET.Element("entry", id=entry_id)
-        new_entry.text = entry_text
-
         for language in root.findall('language'):
+            lang_id = language.get('id')
+            
+            if is_rarity:
+                entry_id = f"trinket_rarity_{entry_id}"
+            else:
+                entry_id = f"str_inventory_title_trinket{entry_id}"
+
+            # Check if the entry already exists
+            existing_entry = language.find(f".//entry[@id='{entry_id}']")
+            if existing_entry is not None:
+                existing_entry.text = self._translate(entry_text, lang_id)
+                continue
+
+            new_entry = ET.Element("entry", id=entry_id)
+            new_entry.text = self._translate(entry_text, lang_id)
             language.append(new_entry)
 
         self._write_xml_to_file(root, output_file_path)
+
+    def _translate(self, text, lang_id):
+        # Implement translation logic here
+        # For now, we'll just return the original text
+        return text
 
     def _create_new_xml_structure(self):
         root = ET.Element("root")
@@ -231,10 +265,16 @@ class StringFileManager:
         reparsed = minidom.parseString(xml_str)
         pretty_xml = reparsed.toprettyxml(indent="  ")
         
+        # Remove extra newlines and spaces
         pretty_xml = re.sub(r'>\n\s+([^<>\s])', r'>\1', pretty_xml)
         pretty_xml = re.sub(r'\n\s*\n', '\n', pretty_xml)
+        
+        # Replace XML declaration
         pretty_xml = pretty_xml.replace('<?xml version="1.0" ?>', '<?xml version="1.0" encoding="UTF-8"?>')
-        pretty_xml = re.sub(r'<entry([^>]*)>([^<]+)</entry>', r'<entry\1><![CDATA[\2]]></entry>', pretty_xml)
+        
+        # Wrap content in CDATA for both trinket names and rarities
+        pretty_xml = re.sub(r'<entry id="([^"]+)">([^<]+)</entry>', 
+                            r'<entry id="\1"><![CDATA[\2]]></entry>', pretty_xml)
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(pretty_xml)
@@ -253,7 +293,7 @@ def main():
     gen_trinket_stats = "{'Virtue Chance': '+5', 'Debuff Resist': '+15'}"  
 
     trinket_id = gen_trinket_name.replace(" ", "_").replace("'", "").lower()
-    string_file_manager.generate_string_file(f"str_inventory_title_trinket{trinket_id}", gen_trinket_name)
+    string_file_manager.generate_string_file(trinket_id, gen_trinket_name)
 
     buff_names = trinket_processor.parse_gen_trinket_buffs(gen_trinket_stats, gen_trinket_name)
     trinket_processor.parse_gen_trinket_entry(gen_trinket_name, gen_trinket_class, gen_trinket_rarity, buff_names)
