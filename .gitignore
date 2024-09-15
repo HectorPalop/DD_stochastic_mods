@@ -14,6 +14,8 @@
 # Ignore python cache files
 /Stochastic_Trinkets/__pycache__/
 
+# Ignore the legacy scripts
+/Stochastic_Trinkets/legacy_files/
 
 # Ignore large files
 *.mp4
